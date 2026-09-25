@@ -1,7 +1,6 @@
 # Kali Networking & NetworkManager — Learning Notes
 
-Concepts I learned while connecting Kali to the lab, written in my own words.
-For what was actually configured, see [Phase 1 — Environment Setup](../phase-1-setup.md).
+Concepts I learned while connecting Kali to the lab. See [Phase 1 — Environment Setup](../phase-1-setup.md).
 
 ## NetworkManager
 
