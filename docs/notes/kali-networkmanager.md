@@ -36,18 +36,96 @@ ls /etc/NetworkManager/system-connections/
 sudo cat /etc/NetworkManager/system-connections/soclab.nmconnection
 ```
 
-## A connection without a device = applied to any card
+## Why Kali had no internet (a connection on the wrong card)
 
-When Kali was installed, NetworkManager auto-created `Wired connection 1` ("get an IP by DHCP") **without binding it to a device**, meaning "apply me to any wired card".
+### The idea in one sentence
 
-With two cards and one unbound profile, NetworkManager put it on `eth1`. But `eth1` is on soclab, where no DHCP server exists, so it waited forever. Meanwhile `eth0`, on NAT where DHCP exists, had no profile at all, so no internet.
+A settings profile that isn't tied to a specific network card can end up on the wrong card.
 
-**Right settings, wrong card.** The fix was to bind each connection to its own device:
+### The setup
 
+Kali has two network cards, each plugged into a different network:
+
+| Card   | Plugged into | Is there a DHCP server there?       |
+| ------ | ------------ | ----------------------------------- |
+| `eth0` | NAT          | Yes: VirtualBox hands out addresses |
+| `eth1` | soclab       | No: nobody hands out addresses      |
+
+NetworkManager had only **one** settings profile, `Wired connection 1`, created automatically when Kali was installed. It said "get an address from DHCP", but it did **not** say which card it was for.
+
+### Reading a profile with commands
+
+Which profile is on which card right now (`DEVICE` column):
+
+```bash
+nmcli con show
 ```
-Wired connection 1 (DHCP)     → eth0 → NAT    → 10.0.2.15
-soclab (static 10.10.10.10)   → eth1 → soclab → 10.10.10.10
+
+What is written inside a profile (`-f` = show only these fields):
+
+```bash
+nmcli -f connection.interface-name,ipv4.method con show "Wired connection 1"
 ```
+
+| Field                       | Meaning                                                    |
+| --------------------------- | ---------------------------------------------------------- |
+| `connection.interface-name` | which card this profile is for (`--` = empty = any card)   |
+| `ipv4.method`               | `auto` = ask DHCP for an address, `manual` = fixed address |
+
+### Reproducing the problem
+
+```bash
+# 1. Remove the static profile from eth1, so eth1 has no settings
+sudo nmcli con down soclab
+
+# 2. Erase the card name from the DHCP profile: now it fits any card
+sudo nmcli con modify "Wired connection 1" connection.interface-name ""
+
+# 3. Put the DHCP profile on eth1, as happened to me
+sudo nmcli con up "Wired connection 1" ifname eth1
+```
+
+Step 3 waits about 45 seconds, then fails: `eth1` asks for an address, but on soclab nobody answers.
+
+```bash
+nmcli device status     # eth1 failed, eth0 disconnected
+ip a show eth0          # no "inet" line: no address
+ping -c 2 8.8.8.8       # fails: no internet
+```
+
+A profile can be active on only **one card at a time**, so moving it to `eth1` took it away from `eth0`.
+
+**Result:** the DHCP profile is on the card whose network has no DHCP server, and the card that needed it has nothing.
+
+### The fix
+
+```bash
+# Write the card name on the DHCP profile, then activate it
+sudo nmcli con modify "Wired connection 1" connection.interface-name eth0
+sudo nmcli con up "Wired connection 1"
+
+# Give eth1 its own static profile back
+sudo nmcli con up soclab
+
+# Check
+nmcli device status
+ping -c 2 8.8.8.8
+ping -c 2 10.10.10.20
+```
+
+Final state:
+
+| Profile            | `interface-name` | `ipv4.method` | Card   | Address                        |
+| ------------------ | ---------------- | ------------- | ------ | ------------------------------ |
+| Wired connection 1 | `eth0`           | `auto`        | `eth0` | 10.0.2.15, given by VirtualBox |
+| soclab             | `eth1`           | `manual`      | `eth1` | 10.10.10.10, fixed             |
+
+### Lesson
+
+On a machine with several network cards:
+
+- **tie every profile to its card** (`connection.interface-name`)
+- use **fixed addresses** on networks that have no DHCP server
 
 ## Connection names and UUID
 
