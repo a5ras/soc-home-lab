@@ -78,6 +78,44 @@ Encryption is end-to-end: VirtualBox only relays encrypted bytes.
 `600` → owner read+write, nobody else anything → `-rw-------`
 
 ## YAML
+A human-readable format for configuration files.
 
-Configuration format where **indentation defines structure** (like Python).
-Items at the same indentation level are siblings; deeper items belong to the one above.
+**Rules:**
+- Every line is `key: value` (no space before the colon)
+- **Indentation defines structure**, like Python: deeper lines belong to the line above
+- Use **spaces, never Tab** (2 spaces per level by convention)
+- Lines at the same indentation level are **siblings**
+- `[ ]` is a **list**: `addresses: [10.10.10.20/24]` could hold several IPs
+
+**My netplan file as a tree:**
+```
+network                           ← root: everything below is network config
+├── version = 2                   ← netplan format version (a value, not a container)
+└── ethernets                     ← type of interfaces: wired (others: wifis, vlans, bridges)
+    └── enp0s8                    ← interface name
+        └── addresses = [10.10.10.20/24]
+```
+`version` and `ethernets` are siblings (both children of `network`), which is why `ethernets` isn't indented under `version`.
+
+**Interface name `enp0s8`:** `en` = ethernet, `p0` = PCI bus 0, `s8` = slot 8 (predictable interface names).
+
+## netplan
+Ubuntu's tool for network configuration. It is **declarative**: I describe the state I want ("enp0s8 has this IP"), not the steps to get there.
+
+netplan doesn't manage the network itself, it's a **translator**:
+```
+YAML files  →  netplan  →  renderer (backend) applies it
+```
+- **systemd-networkd**: renderer on servers (my case)
+- **NetworkManager**: renderer on desktops
+
+**How it reads files:**
+- All `.yaml` files in `/etc/netplan/`, in **alphabetical order**, merged together
+- On conflict, the **last file wins**
+- Number prefixes (`00-`, `60-`) control the order: my `60-soclab.yaml` is read after the installer's `00-installer-config.yaml`
+
+**Commands:**
+| Command | What it does |
+|---------|--------------|
+| `sudo netplan apply` | Apply the configuration |
+| `sudo netplan try` | Apply for 120 s, then roll back unless I
