@@ -76,7 +76,6 @@ Encryption is end-to-end: VirtualBox only relays encrypted bytes.
 
 `r = 4`, `w = 2`, `x = 1`, for owner / group / others.
 `600` → owner read+write, nobody else anything → `-rw-------`
-
 ## YAML
 A human-readable format for configuration files.
 
@@ -118,4 +117,35 @@ YAML files  →  netplan  →  renderer (backend) applies it
 | Command | What it does |
 |---------|--------------|
 | `sudo netplan apply` | Apply the configuration |
+| `sudo netplan try` | Apply for 120 s, then roll back unless I confirm — safe when editing the network over SSH |
+
+## DNS
+Translates names to IPs (`archive.ubuntu.com → 91.189.91.x`). Every `apt update` starts with a DNS query.
+
+A DNS server is a service on an **IP + port 53**. A machine must be given the DNS server's **IP** (not a name — you can't resolve the resolver's name without a resolver), manually or via DHCP.
+
+**Path of one DNS query in my VM:**
+```
+apt → 127.0.0.53 (systemd-resolved, local)
+    → 10.0.2.3   (VirtualBox DNS proxy)
+    → Windows DNS (home router / ISP)
+    → answer comes back the same way
+```
+- `resolvectl status`: DNS server per interface (`enp0s3` → 10.0.2.3, `enp0s8` → none, no internet on soclab)
+- `resolvectl query ubuntu.com`: resolve a name
+- `cat /etc/resolv.conf`: shows `nameserver 127.0.0.53`
+
+**SOC relevance:** DNS logs show every site a host contacts. Traffic to port 53 on an unexpected server is suspicious. DNS spoofing (fake IP for a real name) often goes with ARP spoofing.
+
+## Static IP vs DHCP
+DHCP isn't random: it hands out addresses from a defined range, in order.
+
+VirtualBox NAT layout is fixed and identical for every VM:
+| IP | Role |
+|----|------|
+| 10.0.2.2 | Gateway |
+| 10.0.2.3 | DNS proxy |
+| 10.0.2.15 | First DHCP address → the VM |
+
+**Rule:** machines that others connect to (servers, gateways, DNS) get a **static IP**; machines that only connect out (laptops, phones) use **DHCP**.| `sudo netplan apply` | Apply the configuration |
 | `sudo netplan try` | Apply for 120 s, then roll back unless I
