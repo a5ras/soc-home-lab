@@ -36,13 +36,16 @@ ls /etc/NetworkManager/system-connections/
 sudo cat /etc/NetworkManager/system-connections/soclab.nmconnection
 ```
 
-## Why Kali had no internet (a connection on the wrong card)
+## Problem: Kali lost its internet connection
 
-### The idea in one sentence
+### What I noticed
 
-A settings profile that isn't tied to a specific network card can end up on the wrong card.
+After changing Kali's first network card from **Bridged** to **NAT** in VirtualBox, Kali had no internet:
 
-### The setup
+- `ping 8.8.8.8` failed
+- `ip a` showed that **neither** card (`eth0`, `eth1`) had an IPv4 address
+
+### Why it happened
 
 Kali has two network cards, each plugged into a different network:
 
@@ -53,12 +56,24 @@ Kali has two network cards, each plugged into a different network:
 
 NetworkManager had only **one** settings profile, `Wired connection 1`, created automatically when Kali was installed. It said "get an address from DHCP", but it did **not** say which card it was for.
 
-### Reading a profile with commands
+NetworkManager applied it to `eth1`:
 
-Which profile is on which card right now (`DEVICE` column):
+- `eth1` asked for an address, but on soclab nobody answers, so it waited forever.
+- `eth0`, the card that could actually get an address, had no profile at all, so it never asked.
+
+**In one sentence:** a settings profile that isn't tied to a specific card can end up on the wrong one.
+
+### How I confirmed it
+
+Which profile is on which card (`DEVICE` column):
 
 ```bash
-nmcli con show
+nmcli device status
+```
+
+```
+eth1   connecting (getting IP configuration)   Wired connection 1
+eth0   disconnected                             --
 ```
 
 What is written inside a profile (`-f` = show only these fields):
@@ -72,31 +87,6 @@ nmcli -f connection.interface-name,ipv4.method con show "Wired connection 1"
 | `connection.interface-name` | which card this profile is for (`--` = empty = any card)   |
 | `ipv4.method`               | `auto` = ask DHCP for an address, `manual` = fixed address |
 
-### Reproducing the problem
-
-```bash
-# 1. Remove the static profile from eth1, so eth1 has no settings
-sudo nmcli con down soclab
-
-# 2. Erase the card name from the DHCP profile: now it fits any card
-sudo nmcli con modify "Wired connection 1" connection.interface-name ""
-
-# 3. Put the DHCP profile on eth1, as happened to me
-sudo nmcli con up "Wired connection 1" ifname eth1
-```
-
-Step 3 waits about 45 seconds, then fails: `eth1` asks for an address, but on soclab nobody answers.
-
-```bash
-nmcli device status     # eth1 failed, eth0 disconnected
-ip a show eth0          # no "inet" line: no address
-ping -c 2 8.8.8.8       # fails: no internet
-```
-
-A profile can be active on only **one card at a time**, so moving it to `eth1` took it away from `eth0`.
-
-**Result:** the DHCP profile is on the card whose network has no DHCP server, and the card that needed it has nothing.
-
 ### The fix
 
 ```bash
@@ -104,7 +94,8 @@ A profile can be active on only **one card at a time**, so moving it to `eth1` t
 sudo nmcli con modify "Wired connection 1" connection.interface-name eth0
 sudo nmcli con up "Wired connection 1"
 
-# Give eth1 its own static profile back
+# Create a separate profile with a fixed address for eth1, then activate it
+sudo nmcli con add type ethernet ifname eth1 con-name soclab ipv4.method manual ipv4.addresses 10.10.10.10/24
 sudo nmcli con up soclab
 
 # Check
@@ -119,6 +110,20 @@ Final state:
 | ------------------ | ---------------- | ------------- | ------ | ------------------------------ |
 | Wired connection 1 | `eth0`           | `auto`        | `eth0` | 10.0.2.15, given by VirtualBox |
 | soclab             | `eth1`           | `manual`      | `eth1` | 10.10.10.10, fixed             |
+
+### Reproducing it (to practise)
+
+To see the problem again on purpose:
+
+```bash
+sudo nmcli con down soclab                                                # eth1 has no settings
+sudo nmcli con modify "Wired connection 1" connection.interface-name ""   # profile fits any card
+sudo nmcli con up "Wired connection 1" ifname eth1                        # put it on eth1
+```
+
+The last command waits about 45 seconds, then fails. `nmcli device status` shows `eth0` disconnected and `ping 8.8.8.8` fails: a profile can be active on only **one card at a time**, so moving it to `eth1` took it away from `eth0`.
+
+Then apply **The fix** above to get back to normal.
 
 ### Lesson
 
