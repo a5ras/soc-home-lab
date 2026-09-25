@@ -1,0 +1,83 @@
+# Networking Concepts — Learning Notes
+
+Concepts I learned while building Phase 1, written in my own words.
+
+## An IP belongs to an interface, not to a machine
+
+soc-defender has three interfaces, so three IPs:
+
+| Interface | IP          | Reachable from         |
+| --------- | ----------- | ---------------------- |
+| `lo`      | 127.0.0.1   | the machine itself     |
+| `enp0s3`  | 10.0.2.15   | VirtualBox NAT gateway |
+| `enp0s8`  | 10.10.10.20 | Kali on `soclab`       |
+
+Which IP is used depends on which network the connection comes from.
+
+`127.0.0.1` (loopback) always means "the machine I'm typing on": on Windows it's Windows, inside Ubuntu it's Ubuntu.
+
+## VirtualBox network modes
+
+| Mode             | Internet | VMs see each other | Reaches home network     |
+| ---------------- | -------- | ------------------ | ------------------------ |
+| NAT              | ✅       | ❌ (each VM alone) | ❌                       |
+| Internal Network | ❌       | ✅                 | ❌                       |
+| Bridged          | ✅       | ✅                 | ✅ (dangerous for a lab) |
+
+## VirtualBox NAT = a software router
+
+In NAT mode, VirtualBox acts like a home router:
+
+- **Default gateway:** `10.0.2.2`
+- **DHCP:** gave the VM `10.0.2.15`
+- **NAT:** the VM appears to the outside as Windows
+- **DNS:** `10.0.2.3`
+- **Port forwarding:** my rule `127.0.0.1:2222 → 22`
+
+`ip route` shows `default via 10.0.2.2 dev enp0s3`: all traffic to unknown networks goes to that gateway.
+
+## Every TCP connection has 4 values
+
+```
+source IP : source port  →  destination IP : destination port
+```
+
+- **Destination port:** fixed, well-known (22 SSH, 80 HTTP, 443 HTTPS)
+- **Source port:** random and temporary (ephemeral), so the OS can tell connections apart
+
+With port forwarding there are actually **two** connections, and VirtualBox relays between them:
+
+```
+ssh client 127.0.0.1:5xxxx → VirtualBox 127.0.0.1:2222   (on Windows)
+VirtualBox 10.0.2.2:61819  → sshd 10.0.2.15:22          (inside NAT network)
+```
+
+Ubuntu only sees the second one.
+
+## SSH
+
+Secure Shell: encrypted remote command-line access, client–server, port 22.
+
+1. Client connects to the server on port 22 (TCP)
+2. Both agree on an encryption key → everything is encrypted from here
+3. The server proves its identity with its host key (fingerprint saved in `known_hosts` on first connection; a changed fingerprint may mean a Man-in-the-Middle)
+4. The user authenticates (password or key)
+5. The user gets a shell
+
+Syntax: `ssh [options] user@host [command]`
+
+- `user`: an account on the **remote** machine, checked by `sshd` at the end of the path
+- `host`: the address I can reach that leads to the target (not always the target's own IP)
+- `-p` port, `-i` private key, `-v` verbose (debugging)
+
+Encryption is end-to-end: VirtualBox only relays encrypted bytes.
+
+## Linux permissions (`chmod`)
+
+`r = 4`, `w = 2`, `x = 1`, for owner / group / others.
+`600` → owner read+write, nobody else anything → `-rw-------`
+
+## YAML
+
+Configuration format where **indentation defines structure** (like Python).
+Items at the same indentation level are siblings; deeper items belong to the one above.
