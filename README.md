@@ -73,6 +73,9 @@ home network, VirtualBox NAT (`10.0.2.x`) or Docker bridges (`172.x`).
 | 6     | Wazuh SIEM (4.14.8, `wazuh-server` `10.10.10.40`); correlation via external Python script | Done        | [phase-6-wazuh.md](docs/phase-6-wazuh.md)         |
 | 7     | Brute force (Hydra) — real attack, evasion test, false-positive test | Done        | [phase-7-bruteforce.md](docs/phase-7-bruteforce.md) |
 
+A cross-phase [MITRE ATT&CK mapping](docs/mitre-attack-mapping.md) collects every
+technique touched across the lab, with the evidence behind each entry.
+
 ## Concept notes
 
 Each phase has a companion file explaining the underlying concepts in plain language:
