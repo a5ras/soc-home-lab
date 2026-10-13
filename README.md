@@ -71,7 +71,7 @@ home network, VirtualBox NAT (`10.0.2.x`) or Docker bridges (`172.x`).
 | 4     | ARP spoofing — attack, detect, defend, evade        | Done        | [phase-4-arp-spoofing.md](docs/phase-4-arp-spoofing.md) |
 | 5     | Suricata as IPS — from detect to block (inline)     | Done        | [phase-5-ips.md](docs/phase-5-ips.md)             |
 | 6     | Wazuh SIEM (4.14.8, `wazuh-server` `10.10.10.40`); correlation via external Python script | Done        | [phase-6-wazuh.md](docs/phase-6-wazuh.md)         |
-| 7     | More attacks, honeypot, final documentation         | Planned     | —                                                 |
+| 7     | Brute force (Hydra) — real attack, evasion test, false-positive test | Done        | [phase-7-bruteforce.md](docs/phase-7-bruteforce.md) |
 
 ## Concept notes
 

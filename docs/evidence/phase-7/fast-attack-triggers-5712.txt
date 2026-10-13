@@ -1,0 +1,18 @@
+2026-10-13T20:27:16 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:16 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:18 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:18 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:18 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:18 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:20 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:20 5712 10 sshd: brute force trying to get access to the system. Non existent user.
+2026-10-13T20:27:20 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:20 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:22 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:24 5710 5 sshd: Attempt to login using a non-existent user
+2026-10-13T20:27:26 5710 5 sshd: Attempt to login using a non-existent user
