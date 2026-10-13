@@ -14,7 +14,7 @@ defend, and prove the defence.** Every phase has a full write-up and a separate
 
 ## Lab architecture
 
-Three VirtualBox VMs on a single Windows host (8 GB RAM), kept on an **isolated internal
+Four VirtualBox VMs on a single Windows host (8 GB RAM), kept on an **isolated internal
 network** so no attack can ever reach the real home network.
 
 | VM               | Role                         | soclab IP     | Key software                     |
@@ -22,6 +22,7 @@ network** so no attack can ever reach the real home network.
 | Kali             | Attacker                     | `10.10.10.10` | nmap, arpspoof, scapy            |
 | soc-defender     | Defender / monitor (Ubuntu Server) | `10.10.10.20` | Suricata (IDS/IPS), arpwatch, nftables |
 | Metasploitable 2 | Victim (vulnerable by design) | `10.10.10.30` | —                                |
+| wazuh-server     | SIEM (Ubuntu Server)         | `10.10.10.40` | Wazuh 4.14.8 (manager, indexer, dashboard) |
 
 ### Network
 
@@ -43,7 +44,7 @@ network** so no attack can ever reach the real home network.
 | `10.10.10.10` | Kali (attacker)                           |
 | `10.10.10.20` | soc-defender                              |
 | `10.10.10.30` | Metasploitable 2 (victim)                 |
-| Wazuh         | To be assigned in Phase 6                 |
+| `10.10.10.40` | wazuh-server (Wazuh 4.14.8, Phase 6)      |
 
 **Why `10.10.10.0/24`:** a private (RFC 1918) range chosen so it doesn't collide with the
 home network, VirtualBox NAT (`10.0.2.x`) or Docker bridges (`172.x`).
@@ -56,7 +57,9 @@ home network, VirtualBox NAT (`10.0.2.x`) or Docker bridges (`172.x`).
   (stateful ARP monitoring), nftables, static ARP entries.
 - **Infrastructure:** VirtualBox, Ubuntu Server (netplan + systemd-networkd), Kali
   (NetworkManager), Metasploitable 2.
-- **Planned:** Wazuh (SIEM), pfSense (network IPS/gateway), a honeypot.
+- **SIEM:** Wazuh 4.14.8 on `wazuh-server` (`10.10.10.40`); the correlation runs
+  as an external Python script ([correlate.py](docs/evidence/phase-6/correlate.py)).
+- **Planned:** pfSense (network IPS/gateway), a honeypot.
 
 ## Phases
 
@@ -67,7 +70,7 @@ home network, VirtualBox NAT (`10.0.2.x`) or Docker bridges (`172.x`).
 | 3     | Suricata as IDS — custom rule catches the scan      | Done        | [phase-3-suricata.md](docs/phase-3-suricata.md)   |
 | 4     | ARP spoofing — attack, detect, defend, evade        | Done        | [phase-4-arp-spoofing.md](docs/phase-4-arp-spoofing.md) |
 | 5     | Suricata as IPS — from detect to block (inline)     | Done        | [phase-5-ips.md](docs/phase-5-ips.md)             |
-| 6     | Wazuh SIEM                                           | Planned     | —                                                 |
+| 6     | Wazuh SIEM (4.14.8, `wazuh-server` `10.10.10.40`); correlation via external Python script | Done        | [phase-6-wazuh.md](docs/phase-6-wazuh.md)         |
 | 7     | More attacks, honeypot, final documentation         | Planned     | —                                                 |
 
 ## Concept notes
@@ -86,3 +89,5 @@ Each phase has a companion file explaining the underlying concepts in plain lang
   detection types and their blind spots (Phase 4)
 - [ips-concepts.md](docs/notes/ips-concepts.md) — IDS vs. IPS, inline mode,
   Netfilter + NFQUEUE (Phase 5)
+- [wazuh-concepts.md](docs/notes/wazuh-concepts.md) — SIEM components, decoders vs.
+  rules, correlation and why `srcip` vs. `src_ip` blocked it in Wazuh (Phase 6)

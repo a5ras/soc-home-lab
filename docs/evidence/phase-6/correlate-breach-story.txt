@@ -1,0 +1,5 @@
+no story for 10.0.2.2
+BREACH STORY from 10.10.10.40
+  1. scan at 2026-10-13 18:27:01
+  2. 6 failed SSH logins within 600 seconds
+  3. successful login at 2026-10-13 19:10:13
