@@ -119,11 +119,11 @@ Neither 5712 nor 5763 fired — 3 failures is under their 8-attempt threshold. *
 
 ## Evidence
 
-- `evidence/phase7-bruteforce/commands-used.txt`
-- `evidence/phase7-bruteforce/fast-attack-triggers-5712.txt`
-- `evidence/phase7-bruteforce/slow-attack-evades-5712.txt`
-- `evidence/phase7-false-positives/benign-3fails-then-success.txt`
-- `evidence/phase7-false-positives/correlate-v5-no-break.py`
+- `evidence/phase-7/commands-used.txt`
+- `evidence/phase-7/fast-attack-triggers-5712.txt`
+- `evidence/phase-7/slow-attack-evades-5712.txt`
+- `evidence/phase-7/benign-3fails-then-success.txt`
+- `evidence/phase-7/correlate-v5-no-break.py`
 
 ## Next
 
